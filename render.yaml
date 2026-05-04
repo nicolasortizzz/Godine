@@ -11,8 +11,6 @@ services:
       - key: SESSION_SECRET
         generateValue: true
       - key: DATA_DIR
-        value: /data
-    disks:
-      - name: survey-data
-        mountPath: /data
-        sizeGB: 1
+        value: /tmp
+      - key: MONGODB_URI
+        sync: false

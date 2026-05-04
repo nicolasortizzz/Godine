@@ -132,6 +132,11 @@ async function initDb() {
 
   if (generatedCredentials.length > 0) {
     writeCredentialsFile(generatedCredentials);
+    console.log("=== CREDENCIALES GENERADAS ===");
+    generatedCredentials.forEach((entry) => {
+      console.log(`  ${entry.username} / ${entry.password}`);
+    });
+    console.log("==============================");
   }
 
   initialized = true;

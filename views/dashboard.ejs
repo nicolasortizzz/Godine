@@ -40,6 +40,9 @@
 
       <section class="card">
         <h2>Respuestas de esta semana (<%= state.weekKey %>)</h2>
+        <p>
+          <a class="btn ghost" href="/export-week">Exportar semana (Excel/CSV)</a>
+        </p>
         <% if (!weekRows.length) { %>
           <p class="muted">Aún no hay respuestas esta semana.</p>
         <% } else { %>
@@ -47,7 +50,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>Usuario</th>
+                  <% if (user.role === 'admin') { %><th>Usuario</th><% } %>
                   <th>Pregunta</th>
                   <th>Opción</th>
                 </tr>
@@ -55,7 +58,7 @@
               <tbody>
                 <% weekRows.forEach(function(row) { %>
                   <tr>
-                    <td><%= row.username %></td>
+                    <% if (user.role === 'admin') { %><td><%= row.username %></td><% } %>
                     <td><%= row.question_number %></td>
                     <td><%= row.option_value %></td>
                   </tr>

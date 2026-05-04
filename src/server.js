@@ -143,6 +143,27 @@ app.get("/dashboard", requireAuth, async (req, res) => {
   });
 });
 
+app.get("/export-week", requireAuth, async (req, res) => {
+  const user = req.session.user;
+  const weekKey = getWeekKey();
+  const rows = await getWeekResponses(weekKey);
+  const showUsername = user.role === "admin";
+
+  const header = showUsername ? ["usuario", "pregunta", "opcion"] : ["pregunta", "opcion"];
+  const lines = [header.map(escapeCsvValue).join(",")];
+  rows.forEach((row) => {
+    const values = showUsername
+      ? [row.username, row.question_number, row.option_value]
+      : [row.question_number, row.option_value];
+    lines.push(values.map(escapeCsvValue).join(","));
+  });
+  const csv = `${lines.join("\n")}\n`;
+
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename=semana_${weekKey}.csv`);
+  return res.send(csv);
+});
+
 app.get("/export-history", requireAuth, async (req, res) => {
   const user = req.session.user;
   const rows = user.role === "admin"

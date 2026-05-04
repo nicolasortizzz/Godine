@@ -68,6 +68,24 @@ function generateRandomPassword(length = 12) {
   return out;
 }
 
+function generateDeterministicPassword(username, seed, length = 12) {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+  const hash = crypto.createHash("sha256").update(seed + ":" + username).digest();
+  let out = "";
+  for (let i = 0; i < hash.length && out.length < length; i += 1) {
+    out += alphabet[hash[i] % alphabet.length];
+  }
+  return out;
+}
+
+function generatePassword(username) {
+  const seed = process.env.PASSWORD_SEED;
+  if (seed) {
+    return generateDeterministicPassword(username, seed);
+  }
+  return generateRandomPassword();
+}
+
 function writeCredentialsFile(generated) {
   const lines = [
     "Credenciales generadas automaticamente",
@@ -96,7 +114,7 @@ async function initDb() {
     const username = normalizeUsername(seed.username);
     const existing = await usersDb.findOne({ username });
 
-    const randomPassword = generateRandomPassword();
+    const randomPassword = generatePassword(username);
     const passwordHash = bcrypt.hashSync(randomPassword, 10);
 
     if (existing) {

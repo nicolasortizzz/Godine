@@ -296,6 +296,36 @@ async function getUserResponses(userId) {
   return rows;
 }
 
+async function getWeekResponses(weekKey) {
+  await initDb();
+  const users = await usersDb.find({});
+  const usersById = new Map(users.map((u) => [u._id, u.username]));
+  const responses = await responsesDb.find({ week_key: weekKey }).sort({ submitted_at: -1 });
+  const responseIds = responses.map((r) => r._id);
+  const answers = await answersDb.find({ response_id: { $in: responseIds } }).sort({ question_number: 1 });
+  const answersByResponse = new Map();
+
+  answers.forEach((a) => {
+    const list = answersByResponse.get(a.response_id) || [];
+    list.push(a);
+    answersByResponse.set(a.response_id, list);
+  });
+
+  const rows = [];
+  responses.forEach((response) => {
+    const answerList = answersByResponse.get(response._id) || [];
+    answerList.forEach((answer) => {
+      rows.push({
+        username: usersById.get(response.user_id) || "desconocido",
+        question_number: answer.question_number,
+        option_value: answer.option_value
+      });
+    });
+  });
+
+  return rows;
+}
+
 module.exports = {
   initDb,
   CREDENTIALS_FILE,
@@ -306,5 +336,6 @@ module.exports = {
   hasUserAnsweredWeek,
   saveSurveyResponse,
   getAllResponses,
-  getUserResponses
+  getUserResponses,
+  getWeekResponses
 };

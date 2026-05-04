@@ -39,6 +39,34 @@
       </section>
 
       <section class="card">
+        <h2>Respuestas de esta semana (<%= state.weekKey %>)</h2>
+        <% if (!weekRows.length) { %>
+          <p class="muted">Aún no hay respuestas esta semana.</p>
+        <% } else { %>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Pregunta</th>
+                  <th>Opción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% weekRows.forEach(function(row) { %>
+                  <tr>
+                    <td><%= row.username %></td>
+                    <td><%= row.question_number %></td>
+                    <td><%= row.option_value %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </section>
+
+      <section class="card">
         <h2>Historial</h2>
         <p>
           <a class="btn ghost" href="/export-history">Exportar historial (CSV)</a>

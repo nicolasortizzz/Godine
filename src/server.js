@@ -14,7 +14,8 @@ const {
   hasUserAnsweredWeek,
   saveSurveyResponse,
   getAllResponses,
-  getUserResponses
+  getUserResponses,
+  getWeekResponses
 } = require("./db");
 const { VALID_OPTIONS, QUESTION_COUNT, QUESTIONS } = require("./constants");
 
@@ -125,6 +126,7 @@ app.post("/logout", requireAuth, (req, res) => {
 app.get("/dashboard", requireAuth, async (req, res) => {
   const user = req.session.user;
   const state = await buildDashboardState(user);
+  const weekRows = await getWeekResponses(state.weekKey);
 
   let historyRows = [];
   if (user.role === "admin") {
@@ -136,6 +138,7 @@ app.get("/dashboard", requireAuth, async (req, res) => {
   return res.render("dashboard", {
     user,
     state,
+    weekRows,
     historyRows
   });
 });

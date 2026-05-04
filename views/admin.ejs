@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin | Encuesta Semanal</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body class="bg-grid">
+    <main class="container single">
+      <section class="card">
+        <h1>Administración</h1>
+        <p class="muted">Semana actual: <strong><%= weekKey %></strong></p>
+        <p>Encuesta activa: <strong><%= active ? 'Sí' : 'No' %></strong></p>
+        <p>Hoy es sábado: <strong><%= isTodaySaturday ? 'Sí' : 'No' %></strong></p>
+
+        <% if (message) { %>
+          <div class="alert success"><%= message %></div>
+        <% } %>
+
+        <% if (error) { %>
+          <div class="alert error"><%= error %></div>
+        <% } %>
+
+        <form action="/admin/activate" method="POST" class="stack">
+          <button class="btn" type="submit">Activar encuesta semanal</button>
+          <a class="btn ghost" href="/dashboard">Volver al panel</a>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

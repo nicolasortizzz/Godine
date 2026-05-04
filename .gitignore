@@ -1,0 +1,4 @@
+node_modules/
+*.log
+db_*.json
+generated_credentials.txt

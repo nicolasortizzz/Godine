@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Encuesta | Semana <%= weekKey %></title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body class="bg-wave">
+    <main class="container single">
+      <section class="card">
+        <h1>Encuesta semanal</h1>
+        <p class="muted">Usuario: <strong><%= user.username %></strong> | Semana: <strong><%= weekKey %></strong></p>
+
+        <% if (error) { %>
+          <div class="alert error"><%= error %></div>
+        <% } %>
+
+        <form action="/survey" method="POST" class="stack" id="survey-form" data-options='<%- JSON.stringify(options) %>'>
+          <% questions.forEach(function(question, idx) { %>
+            <label>
+              <span><strong><%= question %></strong></span>
+              <select name="q<%= idx + 1 %>" required class="pick-select">
+                <option value="">Selecciona una opción</option>
+                <% options.forEach(function(option) { %>
+                  <option value="<%= option %>" <%= oldAnswers['q' + (idx + 1)] === option ? 'selected' : '' %>><%= option %></option>
+                <% }) %>
+              </select>
+            </label>
+          <% }) %>
+
+          <button type="submit" class="btn">Enviar encuesta</button>
+          <a href="/dashboard" class="btn ghost">Volver</a>
+        </form>
+      </section>
+    </main>
+    <script>
+      (function () {
+        const form = document.getElementById('survey-form');
+        const selects = Array.from(document.querySelectorAll('.pick-select'));
+        const baseOptions = JSON.parse(form.dataset.options || '[]');
+
+        function updateOptions() {
+          const selectedValues = selects
+            .map((select) => select.value)
+            .filter((value) => value);
+
+          selects.forEach((select) => {
+            const current = select.value;
+
+            const usedByOthers = new Set(
+              selectedValues.filter((value) => value !== current)
+            );
+
+            select.innerHTML = '';
+
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Selecciona una opción';
+            select.appendChild(placeholder);
+
+            baseOptions.forEach((name) => {
+              if (usedByOthers.has(name)) {
+                return;
+              }
+
+              const option = document.createElement('option');
+              option.value = name;
+              option.textContent = name;
+              if (name === current) {
+                option.selected = true;
+              }
+              select.appendChild(option);
+            });
+          });
+        }
+
+        selects.forEach((select) => {
+          select.addEventListener('change', updateOptions);
+        });
+
+        updateOptions();
+      })();
+    </script>
+  </body>
+</html>

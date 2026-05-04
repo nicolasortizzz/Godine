@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel | Encuesta Semanal</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body class="bg-grid">
+    <header class="topbar">
+      <div>
+        <h1>Panel</h1>
+        <p class="muted">Semana: <strong><%= state.weekKey %></strong></p>
+      </div>
+      <div class="top-actions">
+        <span class="badge"><%= user.username %> (<%= user.role %>)</span>
+        <form action="/logout" method="POST">
+          <button class="btn ghost" type="submit">Salir</button>
+        </form>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h2>Estado de encuesta</h2>
+        <p>Activa: <strong><%= state.active ? 'Sí' : 'No' %></strong></p>
+        <p>Ya respondida esta semana: <strong><%= state.alreadyAnswered ? 'Sí' : 'No' %></strong></p>
+
+        <% if (state.canAnswer) { %>
+          <a class="btn" href="/survey">Responder encuesta ahora</a>
+        <% } else { %>
+          <p class="muted">Solo puedes responder una vez por semana y cuando esté activada por administración.</p>
+        <% } %>
+
+        <% if (user.role === 'admin') { %>
+          <hr />
+          <a class="btn ghost" href="/admin">Ir a administración</a>
+        <% } %>
+      </section>
+
+      <section class="card">
+        <h2>Historial</h2>
+        <p>
+          <a class="btn ghost" href="/export-history">Exportar historial (CSV)</a>
+        </p>
+        <% if (!historyRows.length) { %>
+          <p class="muted">Aún no hay respuestas guardadas.</p>
+        <% } else { %>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <% if (user.role === 'admin') { %><th>Usuario</th><% } %>
+                  <th>Semana</th>
+                  <th>Fecha</th>
+                  <th>Pregunta</th>
+                  <th>Opción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% historyRows.forEach(function(row) { %>
+                  <tr>
+                    <% if (user.role === 'admin') { %><td><%= row.username %></td><% } %>
+                    <td><%= row.week_key %></td>
+                    <td><%= row.submitted_at %></td>
+                    <td><%= row.question_number %></td>
+                    <td><%= row.option_value %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </section>
+    </main>
+  </body>
+</html>

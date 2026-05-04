@@ -12,7 +12,6 @@
         <h1>Administración</h1>
         <p class="muted">Semana actual: <strong><%= weekKey %></strong></p>
         <p>Encuesta activa: <strong><%= active ? 'Sí' : 'No' %></strong></p>
-        <p>Hoy es sábado: <strong><%= isTodaySaturday ? 'Sí' : 'No' %></strong></p>
 
         <% if (message) { %>
           <div class="alert success"><%= message %></div>
@@ -24,7 +23,7 @@
 
         <form action="/admin/activate" method="POST" class="stack">
           <button class="btn" type="submit">Activar encuesta semanal</button>
-          <a class="btn ghost" href="/dashboard">Volver al panel</a>
+          <a class="btn ghost" href="/dashbo<%= active ? 'Reiniciar encuesta' : 'Activar encuesta semanal' %>
         </form>
       </section>
     </main>

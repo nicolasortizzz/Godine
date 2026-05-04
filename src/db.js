@@ -195,6 +195,16 @@ async function activateSurveyForWeek(weekKey, adminId) {
   );
 }
 
+async function resetSurveyForWeek(weekKey, adminId) {
+  await initDb();
+  const responses = await responsesDb.find({ week_key: weekKey });
+  for (const r of responses) {
+    await answersDb.remove({ response_id: r._id }, { multi: true });
+  }
+  await responsesDb.remove({ week_key: weekKey }, { multi: true });
+  await activateSurveyForWeek(weekKey, adminId);
+}
+
 async function hasUserAnsweredWeek(userId, weekKey) {
   await initDb();
   const row = await responsesDb.findOne({ user_id: userId, week_key: weekKey });
@@ -291,6 +301,7 @@ module.exports = {
   CREDENTIALS_FILE,
   getUserByUsername,
   activateSurveyForWeek,
+  resetSurveyForWeek,
   isSurveyActiveForWeek,
   hasUserAnsweredWeek,
   saveSurveyResponse,

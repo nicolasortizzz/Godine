@@ -9,6 +9,7 @@ const {
   CREDENTIALS_FILE,
   getUserByUsername,
   activateSurveyForWeek,
+  resetSurveyForWeek,
   isSurveyActiveForWeek,
   hasUserAnsweredWeek,
   saveSurveyResponse,
@@ -41,10 +42,6 @@ function getWeekKey(date = new Date()) {
   const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil((((utc - yearStart) / 86400000) + 1) / 7);
   return `${utc.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
-}
-
-function isSaturday(date = new Date()) {
-  return date.getDay() === 6;
 }
 
 function escapeCsvValue(value) {
@@ -249,7 +246,6 @@ app.get("/admin", requireAdmin, async (req, res) => {
   return res.render("admin", {
     weekKey,
     active,
-    isTodaySaturday: isSaturday(),
     message: null,
     error: null
   });
@@ -257,24 +253,18 @@ app.get("/admin", requireAdmin, async (req, res) => {
 
 app.post("/admin/activate", requireAdmin, async (req, res) => {
   const weekKey = getWeekKey();
+  const wasActive = await isSurveyActiveForWeek(weekKey);
 
-  if (!isSaturday()) {
-    return res.status(400).render("admin", {
-      weekKey,
-      active: await isSurveyActiveForWeek(weekKey),
-      isTodaySaturday: false,
-      message: null,
-      error: "Solo se puede activar la encuesta en sábado."
-    });
-  }
+  await resetSurveyForWeek(weekKey, req.session.user.id);
 
-  await activateSurveyForWeek(weekKey, req.session.user.id);
+  const msg = wasActive
+    ? "Encuesta reiniciada correctamente. Todos los usuarios pueden volver a responder."
+    : "Encuesta activada correctamente para esta semana.";
 
   return res.render("admin", {
     weekKey,
     active: true,
-    isTodaySaturday: true,
-    message: "Encuesta activada correctamente para esta semana.",
+    message: msg,
     error: null
   });
 });

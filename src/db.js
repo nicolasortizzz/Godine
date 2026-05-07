@@ -1,8 +1,11 @@
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const { MongoClient, ObjectId } = require("mongodb");
 const bcrypt = require("bcrypt");
 
-const CREDENTIALS_FILE = "Las credenciales son privadas. Contactar al administrador.";
+const PASSWORD_SEED_VERSION = 2;
+const CREDENTIALS_FILE = "(ver logs del servidor)";
 
 const DEFAULT_USERS = [
   { username: "admin", role: "admin" },
@@ -41,11 +44,39 @@ function generateRandomPassword(length = 12) {
   return out;
 }
 
+function generateDeterministicPassword(username, seed, length = 12) {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+  const hash = crypto.createHash("sha256").update(seed + ":" + username).digest();
+  let out = "";
+  for (let i = 0; i < hash.length && out.length < length; i += 1) {
+    out += alphabet[hash[i] % alphabet.length];
+  }
+  return out;
+}
+
 function generatePassword(username) {
+  const seed = process.env.PASSWORD_SEED;
+  if (seed) return generateDeterministicPassword(username, seed);
   return generateRandomPassword();
 }
 
-
+function writeCredentialsFile(generated) {
+  try {
+    const lines = [
+      "Credenciales generadas automaticamente",
+      `Fecha: ${new Date().toISOString()}`,
+      "",
+      "IMPORTANTE: guarda estas claves en un lugar seguro.",
+      ""
+    ];
+    generated.forEach((e) => lines.push(`${e.username} / ${e.password}`));
+    // attempt to write beside project; ignore errors
+    const out = path.join(__dirname, "..", "generated_credentials.txt");
+    fs.writeFileSync(out, `${lines.join("\n")}\n`, "utf8");
+  } catch (err) {
+    // ignore
+  }
+}
 
 async function connect() {
   if (db) return db;
@@ -70,13 +101,27 @@ async function initDb() {
   await surveyWindows.createIndex({ week_key: 1 }, { unique: true });
   await responses.createIndex({ unique_user_week: 1 }, { unique: true });
 
+  const generated = [];
   for (const seed of DEFAULT_USERS) {
     const username = normalizeUsername(seed.username);
     const existing = await users.findOne({ username });
-    if (existing) continue;
     const password = generatePassword(username);
     const password_hash = bcrypt.hashSync(password, 10);
-    await users.insertOne({ username, password_hash, role: seed.role, created_at: new Date().toISOString() });
+    if (existing) {
+      if (existing.password_seed_version === PASSWORD_SEED_VERSION) continue;
+      await users.updateOne({ _id: existing._id }, { $set: { password_hash, role: seed.role, password_seed_version: PASSWORD_SEED_VERSION } });
+      generated.push({ username, password });
+      continue;
+    }
+    await users.insertOne({ username, password_hash, role: seed.role, password_seed_version: PASSWORD_SEED_VERSION, created_at: new Date().toISOString() });
+    generated.push({ username, password });
+  }
+
+  if (generated.length > 0) {
+    writeCredentialsFile(generated);
+    console.log("=== CREDENCIALES GENERADAS ===");
+    generated.forEach((e) => console.log(`  ${e.username} / ${e.password}`));
+    console.log("==============================");
   }
 
   // attach to module-level variables for other functions

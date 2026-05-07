@@ -10,7 +10,5 @@ services:
         value: 20
       - key: SESSION_SECRET
         generateValue: true
-      - key: DATA_DIR
-        value: /tmp
       - key: MONGODB_URI
         sync: false

@@ -2,6 +2,7 @@ const path = require("path");
 const express = require("express");
 const session = require("express-session");
 const bcrypt = require("bcrypt");
+const rateLimit = require("express-rate-limit");
 
 const { requireAuth, requireAdmin } = require("./auth");
 const {
@@ -22,6 +23,19 @@ const { VALID_OPTIONS, QUESTION_COUNT, QUESTIONS } = require("./constants");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET) {
+  throw new Error("ERROR: La variable de entorno SESSION_SECRET es requerida para seguridad.");
+}
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: "Demasiados intentos de login. Intenta de nuevo en 15 minutos.",
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "..", "views"));
 
@@ -29,10 +43,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "cambia-esto-en-produccion",
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 1000 * 60 * 60 * 24 }
+    cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true, secure: process.env.NODE_ENV === "production" }
   })
 );
 
@@ -94,7 +108,7 @@ app.get("/login", (req, res) => {
   return res.render("login", { error: null });
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login", loginLimiter, async (req, res) => {
   const username = String(req.body.username || "").trim().toLowerCase();
   const password = String(req.body.password || "");
   const user = await getUserByUsername(username);
